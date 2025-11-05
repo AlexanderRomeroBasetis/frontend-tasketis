@@ -3,7 +3,7 @@ import type { IAuthContext } from "../interfaces";
 
 const AuthContext = createContext<IAuthContext | undefined>(undefined);
 
-export const AuthProvider = ({children}: {children: ReactNode}) => {
+export const AuthContextProvider = ({children}: {children: ReactNode}) => {
     const [accessToken, setAccessToken] = useState<string | null>(null);
     const [refreshToken, setRefreshToken] = useState<string | null>(null);
 

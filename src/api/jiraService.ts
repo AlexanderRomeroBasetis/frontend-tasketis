@@ -25,7 +25,6 @@ export const jiraService = {
             const jiraIssue: IJiraIssue = await response.json();
             return jiraIssue;
         } catch (error) {
-            console.error('Error al obtener los tokens del backend:', error);
             throw error;
         }
     }

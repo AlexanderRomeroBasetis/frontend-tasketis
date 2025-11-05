@@ -33,7 +33,7 @@ const Login: React.FC = () => {
 
             if (tokens) {
                 setTokens(tokens.accessToken, tokens.refreshToken);
-                navigate('/');
+                navigate('/test-case-generator');
             }
 
         } catch (error) {

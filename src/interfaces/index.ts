@@ -6,3 +6,4 @@ export * from './IUser';
 export * from './IUserUpdateRequest';
 export * from './ITestCase';
 export * from './ITask';
+export * from './ITaskGroup';

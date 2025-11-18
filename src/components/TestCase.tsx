@@ -2,6 +2,7 @@
 import React, { useState, type Dispatch } from 'react';
 import { geminiService } from '../api/geminiService';
 import type { ITestCase } from '../interfaces';
+import { jiraService } from '../api/jiraService';
 
 interface TestCaseProps {
     jiraIssueKey: string;
@@ -85,7 +86,7 @@ export const TestCase: React.FC<TestCaseProps> = ({
         if (selectedTestCases.length === 0) {
             throw new Error('No hay casos de prueba seleccionados para enviar.');
         }
-        geminiService.postTestCases(jiraIssueKey, testCasesToSend);
+        jiraService.postTestCases(jiraIssueKey, testCasesToSend);
     }
 
     return (
@@ -120,7 +121,6 @@ export const TestCase: React.FC<TestCaseProps> = ({
                 {testCases.map((testCase, index) => (
                     <div key={index} className="p-6 bg-white rounded-lg border border-gray-200 shadow-sm">
                         {editingIndex === index ? (
-                            // Edit mode
                             <form onSubmit={handleSaveEdit} className="space-y-4">
                                 <div>
                                     <label htmlFor={`title-${index}`} className="block text-sm font-bold text-gray-700 mb-2">
@@ -184,7 +184,6 @@ export const TestCase: React.FC<TestCaseProps> = ({
                                 </div>
                             </form>
                         ) : (
-                            // View mode
                             <div className="flex justify-between items-stretch min-h-32">
                                 <div className="space-y-3 flex-grow">
                                     <h4 className="text-lg font-semibold text-gray-800">{testCase.title}</h4>
@@ -198,7 +197,6 @@ export const TestCase: React.FC<TestCaseProps> = ({
                                     </p>
                                 </div>
                                 <div className="flex flex-col justify-between items-end self-stretch ml-4">
-                                    {/* Checkbox en la parte superior */}
                                     <div className="flex items-center h-5">
                                         <input
                                             id={`test-checkbox-${index}`}
@@ -209,7 +207,6 @@ export const TestCase: React.FC<TestCaseProps> = ({
                                             className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded"
                                         />
                                     </div>
-                                    {/* Botón en la parte inferior */}
                                     <button
                                         onClick={() => handleEditTestCase(index)}
                                         className="px-2 py-1 bg-gray-400 text-white text-sm font-medium rounded-md hover:bg-blue-600 hover:cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
@@ -223,7 +220,6 @@ export const TestCase: React.FC<TestCaseProps> = ({
                     </div>
                 ))}
 
-                {/* Load message */}
                 {loading &&
                     <div className="flex flex-col items-center space-y-4">
                         <p className="text-center text-gray-600">Cargando casos de prueba...</p>

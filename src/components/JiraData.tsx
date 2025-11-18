@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { jiraService } from "../api/JiraService";
+import { jiraService } from "../api/jiraService";
 import type { IJiraIssue } from "../interfaces";
 import parse from 'html-react-parser';
 

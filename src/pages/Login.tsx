@@ -1,49 +1,44 @@
-import React from "react";
-import { GoogleLogin, type CredentialResponse } from "@react-oauth/google";
+import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import type { IUserGoogleData } from "../interfaces";
+import { authService } from "../api/authService";
 import '../styles/login-page.css';
-import { authService } from "../api/AuthService";
 
+declare global {
+    interface Window {
+        google?: any;
+    }
+}
 
 const Login: React.FC = () => {
     const navigate = useNavigate();
     const { setTokens } = useAuth();
+    const googleButtonDiv = React.useRef<HTMLDivElement>(null);
 
-    const handleLoginSuccess = async (credentialResponse: CredentialResponse) => {
-        const credential = credentialResponse.credential;
-
-        if (!credential) {
-            console.log('No credential returned');
-            return;
-        }
-        
+    const handleGoogleSignIn = async (response: any /* google.accounts.id.CredentialResponse */) => {
         try {
-            const payload = JSON.parse(atob(credential.split('.')[1]));
-
-            const userGoogleData: IUserGoogleData = {
-                email: payload.email,
-                name: payload.name,
-                sub: payload.sub,
-                picture: payload.picture || '',
-            };
-
-            const tokens = await authService.getBackendTokens(userGoogleData);
-
-            if (tokens) {
-                setTokens(tokens.accessToken, tokens.refreshToken);
-                navigate('/test-case-generator');
-            }
+            const backendResponse = await authService.loginWithGoogle(response.credential);
+            setTokens(backendResponse.accessToken, backendResponse.refreshToken);
+            navigate('/task-generator');
 
         } catch (error) {
             throw new Error("Login fallido");
         }
     };
 
-    const handleLoginError = () => {
-        console.log('Login Failed');
-    };
+    useEffect(() => {
+        if (window.google && googleButtonDiv.current) {
+            window.google.accounts.id.initialize({
+                client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+                callback: handleGoogleSignIn,
+            });
+
+            window.google.accounts.id.renderButton(
+                googleButtonDiv.current,
+                { theme: 'outline', size: 'large', type: 'standard', text: 'signin_with' }
+            );
+        }
+    }, []);
 
     return (
         <div className="login-page">
@@ -52,10 +47,7 @@ const Login: React.FC = () => {
                     <h1>Login</h1>
                     <p>Sign in with your Google account</p>
                 </div>
-                <GoogleLogin
-                    onSuccess={handleLoginSuccess}
-                    onError={handleLoginError}
-                />
+                <div id="google-signin-button" ref={googleButtonDiv}></div>
             </div>
         </div>
     );

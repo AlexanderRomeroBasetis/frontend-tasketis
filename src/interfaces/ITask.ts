@@ -3,4 +3,5 @@ export interface ITask {
     environment: string;
     description: string;
     priority: string;
+    selected?: boolean;
 }

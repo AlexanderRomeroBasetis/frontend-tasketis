@@ -1,3 +1,4 @@
+import axios from "axios";
 import type { ILoginResponse, IUserGoogleData } from "../interfaces";
 
 export const authService = {
@@ -21,6 +22,25 @@ export const authService = {
             return tokens;
 
         } catch (error) {
+            throw error;
+        }
+    },
+
+    loginWithGoogle: async (googleToken: string): Promise<ILoginResponse> => {
+        const endpoint = '/api/auth/login';
+
+        try {
+            const response = await axios.post<ILoginResponse>(endpoint, {
+                googleToken,
+            });
+
+            if (response.data.accessToken) {
+                localStorage.setItem('authToken', response.data.accessToken);
+            }
+
+            return response.data;
+        } catch (error) {
+            console.error('Error during Google login with backend:', error);
             throw error;
         }
     }

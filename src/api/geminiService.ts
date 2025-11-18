@@ -1,4 +1,4 @@
-import type { ITask, ITestCase } from "../interfaces";
+import type { ITaskGroup, ITestCase } from "../interfaces";
 
 export const geminiService = {
     generateTestCases: async (issueKey: string, testType: string): Promise<ITestCase[]> => {
@@ -34,70 +34,35 @@ export const geminiService = {
         }
     },
 
-    postTestCases: async (issueKey: string, testCases: ITestCase[]): Promise<void> => {
-        const endpoint = `/api/post-test-cases?issueKey=${issueKey}`;
-        const accessToken = localStorage.getItem('accessToken');
-
-        if (!accessToken) {
-            throw new Error('No access token available');
-        }
-        console.log('Test cases to send:', testCases);
-        if (testCases.length === 0) {
-            throw new Error('No test cases to send');
-        }
-
-        try {
-            const response = await fetch(endpoint, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${accessToken}`,
-                },
-                body: JSON.stringify(testCases)
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || `Error del servidor: ${response.status}`);
-            }
-
-        } catch (error) {
-            console.error('Error al obtener los tokens del backend:', error);
-            throw error;
-        }
-    },
-
-    generateTasks: async (pdf: File): Promise<ITask[]> => {
+    generateTasks: async (pdf: File): Promise<ITaskGroup[]> => {
         const endpoint = "/api/generate-tasks";
         const accessToken = localStorage.getItem('accessToken');
-        console.log('Sending PDF file to backend for task generation:', pdf);
-        console.log(accessToken)
 
         if (!accessToken) {
             throw new Error('No access token available');
         }
 
         try {
+            const formData = new FormData();
+            formData.append('pdf', pdf);
+
             const response = await fetch(endpoint, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
                     'Authorization': `Bearer ${accessToken}`,
                 },
-                body: JSON.stringify({ pdf })
-            });
+                body: formData
+            })
 
             if (!response.ok) {
                 const errorData = await response.json();
                 throw new Error(errorData.message || `Error del servidor: ${response.status}`);
             }
 
-            const tasks: ITask[] = await response.json();
-            console.log('Tasks received from backend:', tasks);
+            const tasks: ITaskGroup[] = await response.json();
             return tasks;
 
         } catch (error) {
-            console.error('Error al obtener los tokens del backend:', error);
             throw error;
         }
     },

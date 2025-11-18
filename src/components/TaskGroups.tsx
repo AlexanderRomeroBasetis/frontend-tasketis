@@ -9,7 +9,8 @@ interface TaskGroupProps {
 const TaskGroup: React.FC<TaskGroupProps> = ({ taskGroupsFetched }) => {
 
     const [taskGroups, setTaskGroups] = useState<ITaskGroup[]>(taskGroupsFetched);
-    const [showAlertNoSelectedTasksGroups, setShowAlertNoSelectedTasksGroups] = useState<boolean>(false);
+    const [showAlertWrongSelection, setShowAlertWrongSelection] = useState<boolean>(false);
+    const [showAlertTasksSendCorrectly, setShowAlertTasksSendCorrectly] = useState<boolean>(false);
 
     const handleTaskGroupSelection = (index: number) => {
         setTaskGroups(prevTaskGroups =>
@@ -38,10 +39,20 @@ const TaskGroup: React.FC<TaskGroupProps> = ({ taskGroupsFetched }) => {
         );
     };
 
-    const alertNoSelectedTasksGroups = () => {
+    const alertWrongSelection = () => {
         return (
-            <div className="fade-in-out fixed bottom-4 right-4 p-4 text-sm rounded-lg bg-red-50 bg-gray-100 text-red-400" role="alert">
+            <div className="fade-in-out fixed bottom-4 right-4 p-4 text-sm rounded-lg bg-red-50 bg-gray-100 text-gray-600" role="alert">
                 <span className="font-medium">Selecciona al menos una epica.</span>
+                <br />
+                <span className="font-medium">Todas las epicas deben tener minimo una tarea.</span>
+            </div>
+        );
+    };
+
+    const alertTasksSendCorrectly = () => {
+        return (
+            <div className="fade-in-out fixed bottom-4 right-4 p-4 text-sm rounded-lg bg-green-50 bg-gray-100 text-gray-600" role="alert">
+                <span className="font-medium">Tareas enviadas correctamente.</span>
             </div>
         );
     };
@@ -50,9 +61,16 @@ const TaskGroup: React.FC<TaskGroupProps> = ({ taskGroupsFetched }) => {
         const selectedGroups = taskGroups.filter(group => group.selected);
 
         if (selectedGroups.length === 0) {
-            setShowAlertNoSelectedTasksGroups(true);
-            setTimeout(() => setShowAlertNoSelectedTasksGroups(false), 5000);
+            setShowAlertWrongSelection(true);
+            setTimeout(() => setShowAlertWrongSelection(false), 5000);
             throw new Error('No hay casos de prueba seleccionados para enviar.');
+        }
+
+        const groupsWithNoSelectedTasks = selectedGroups.filter(group => !group.tasks.some(task => task.selected));
+        if (groupsWithNoSelectedTasks.length > 0) {
+            setShowAlertWrongSelection(true);
+            setTimeout(() => setShowAlertWrongSelection(false), 5000);
+            throw new Error('No hay tareas seleccionadas para enviar en algunos grupos.');
         }
 
         const transformedGroups = selectedGroups.map(group => ({
@@ -71,6 +89,8 @@ const TaskGroup: React.FC<TaskGroupProps> = ({ taskGroupsFetched }) => {
 
         console.log('Grupos de tareas seleccionados para enviar:', transformedGroups);
         jiraService.postTaskGroups('PIA', transformedGroups);
+        setShowAlertTasksSendCorrectly(true);
+        setTimeout(() => setShowAlertTasksSendCorrectly(false), 5000);
     };
 
     return (
@@ -130,7 +150,8 @@ const TaskGroup: React.FC<TaskGroupProps> = ({ taskGroupsFetched }) => {
                     Enviar
                 </button>
             </div>
-            {showAlertNoSelectedTasksGroups && alertNoSelectedTasksGroups()}
+            {showAlertWrongSelection && alertWrongSelection()}
+            {showAlertTasksSendCorrectly && alertTasksSendCorrectly()}
         </div>
     );
 };

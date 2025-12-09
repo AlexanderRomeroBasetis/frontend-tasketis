@@ -2,7 +2,7 @@ import type { IJiraIssue, ITaskGroup, ITestCase } from "../interfaces";
 
 export const jiraService = {
     getJiraIssue: async (issueKey: string, accessToken: string): Promise<IJiraIssue> => {
-        const endpoint = `/api/get-task?issueKey=${encodeURIComponent(issueKey)}`;
+        const endpoint = `/api/task?issueKey=${encodeURIComponent(issueKey)}`;
 
         if (!accessToken) {
             throw new Error('No access token available');

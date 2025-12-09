@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { geminiService } from "../api/geminiService";
+import { testCaseService } from "../api/testCaseService";
 import type { ITaskGroup } from "../interfaces";
 import UploadFile from "../components/UploadFile";
 import TaskGroup from "../components/TaskGroups";
@@ -15,7 +15,7 @@ const TaskGenerator: React.FC = () => {
         <div className="min-h-screen bg-gray-100 p-6">
             <UploadFile 
                 onFilesGenerated={handleFilesGenerated}
-                geminiService={geminiService}
+                testCaseService={testCaseService}
             />
 
             {taskGroups.length > 0 && (

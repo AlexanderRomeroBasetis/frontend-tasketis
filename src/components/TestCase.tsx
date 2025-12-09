@@ -1,6 +1,6 @@
 // component test case tsx
 import React, { useState, type Dispatch } from 'react';
-import { geminiService } from '../api/geminiService';
+import { testCaseService } from '../api/testCaseService';
 import type { ITestCase } from '../interfaces';
 import { jiraService } from '../api/jiraService';
 
@@ -18,6 +18,7 @@ export const TestCase: React.FC<TestCaseProps> = ({
     const [testType, setTestType] = useState<string>("api");
     const [editingIndex, setEditingIndex] = useState<number | null>(null);
     const [editingTestCase, setEditingTestCase] = useState<ITestCase | null>(null);
+    const [aiModel, setAiModel] = useState<number>(1);
 
     const handleGenerateTestCases = async () => {
         if (!jiraIssueKey) {
@@ -29,7 +30,7 @@ export const TestCase: React.FC<TestCaseProps> = ({
         setTestCases([]);
 
         try {
-            const generatedTestCases = await geminiService.generateTestCases(jiraIssueKey, testType);
+            const generatedTestCases = await testCaseService.generateTestCases(jiraIssueKey, testType, aiModel);
             setTestCases(generatedTestCases);
         } catch (error) {
             throw error;
@@ -94,6 +95,22 @@ export const TestCase: React.FC<TestCaseProps> = ({
             {/* Test Type Selector */}
             <section className="p-6 bg-gray-50 rounded-lg border border-gray-200 grid grid-cols-1 gap-8">
                 <h3 className="text-xl font-semibold text-gray-800 mb-6">⚙️ Generar Tests</h3>
+                <div className="flex flex-col sm:flex-row items-stretch gap-3">
+                    <select
+                        name="ai-model"
+                        id="ai-model-selector"
+                        className="flex-grow px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                        defaultValue=""
+                        value={aiModel}
+                        onChange={(e) => setAiModel(Number(e.target.value))}
+                    >
+                        <option value="" disabled>
+                            Selecciona el modelo de lenguaje que quieres usar
+                        </option>
+                        <option value="1">GEMINI</option>
+                        <option value="2">CHATGPT</option>
+                    </select>
+                </div>
                 <div className="flex flex-col sm:flex-row items-stretch gap-3">
                     <select
                         name="test-type"

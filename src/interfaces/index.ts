@@ -7,3 +7,8 @@ export * from './IUserUpdateRequest';
 export * from './ITestCase';
 export * from './ITask';
 export * from './ITaskGroup';
+export * from './IAi';
+export * from './IUpdateAiUserConfigurationResponse';
+export * from './IUpdateAiUserConfigurationRequest';
+export * from './IAiType';
+export * from './IUserAiConfiguration';

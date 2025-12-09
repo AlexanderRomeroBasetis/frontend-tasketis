@@ -2,10 +2,10 @@ import { useState, useRef } from "react";
 
 interface UploadFileProps {
     onFilesGenerated: (taskGroups: any[]) => void;
-    geminiService: any;
+    testCaseService: any;
 }
 
-const UploadFile: React.FC<UploadFileProps> = ({ onFilesGenerated, geminiService }) => {
+const UploadFile: React.FC<UploadFileProps> = ({ onFilesGenerated, testCaseService }) => {
     const [isDragActive, setIsDragActive] = useState(false);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [uploadError, setUploadError] = useState<string>('');
@@ -36,7 +36,7 @@ const UploadFile: React.FC<UploadFileProps> = ({ onFilesGenerated, geminiService
 
         try {
             if (selectedFile) {
-                const fetchedTasks = await geminiService.generateTasks(selectedFile);
+                const fetchedTasks = await testCaseService.generateTasks(selectedFile);
                 setIsLoading(false);
                 setSelectedFile(null);
                 onFilesGenerated(fetchedTasks);

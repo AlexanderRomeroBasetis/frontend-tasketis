@@ -4,7 +4,6 @@ export interface IUser {
     email: string;
     googleId: string;
     profilePictureUrl: string;
-    geminiToken: string;
     jiraToken: string;
     jiraUrl: string;
     jiraVersion: number;

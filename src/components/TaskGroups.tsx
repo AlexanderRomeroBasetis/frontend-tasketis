@@ -11,7 +11,76 @@ const TaskGroup: React.FC<TaskGroupProps> = ({ taskGroupsFetched }) => {
     const [taskGroups, setTaskGroups] = useState<ITaskGroup[]>(taskGroupsFetched);
     const [showAlertWrongSelection, setShowAlertWrongSelection] = useState<boolean>(false);
     const [showAlertTasksSendCorrectly, setShowAlertTasksSendCorrectly] = useState<boolean>(false);
+    const [showAlertNoToken, setShowAlertNoToken] = useState<boolean>(false);
+    const [editingTitleIndex, setEditingTitleIndex] = useState<number | null>(null);
+    const [editingTaskField, setEditingTaskField] = useState<{
+        groupIndex: number;
+        taskIndex: number;
+        field: 'title' | 'description' | 'priority' | 'environment';
+    } | null>(null);
 
+    const handleTitleClick = (index: number) => {
+        setEditingTitleIndex(index);
+    };
+
+    const handleTitleChange = (index: number, newTitle: string) => {
+        setTaskGroups(prevTaskGroups =>
+            prevTaskGroups.map((taskGroup, i) =>
+                i === index
+                    ? { ...taskGroup, title: newTitle }
+                    : taskGroup
+            )
+        );
+    };
+
+    const handleTitleBlur = () => {
+        setEditingTitleIndex(null);
+    };
+
+    const handleTitleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter') {
+            setEditingTitleIndex(null);
+        }
+    };
+
+    const handleTaskFieldClick = (groupIndex: number, taskIndex: number, field: 'title' | 'description' | 'priority' | 'environment') => {
+        setEditingTaskField({ groupIndex, taskIndex, field });
+    };
+
+    const handleTaskFieldChange = (groupIndex: number, taskIndex: number, field: string, newValue: string) => {
+        setTaskGroups(prevTaskGroups =>
+            prevTaskGroups.map((taskGroup, gIndex) =>
+                gIndex === groupIndex
+                    ? {
+                        ...taskGroup,
+                        tasks: taskGroup.tasks.map((task, tIndex) =>
+                            tIndex === taskIndex
+                                ? { ...task, [field]: newValue }
+                                : task
+                        )
+                    }
+                    : taskGroup
+            )
+        );
+    };
+
+    const handleTaskFieldBlur = () => {
+        setEditingTaskField(null);
+    };
+
+    const handleTaskFieldKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter') {
+            setEditingTaskField(null);
+        }
+    };
+
+    const isTaskFieldEditing = (groupIndex: number, taskIndex: number, field: string) => {
+        return editingTaskField?.groupIndex === groupIndex &&
+            editingTaskField?.taskIndex === taskIndex &&
+            editingTaskField?.field === field;
+    };
+
+    // Handle Selection
     const handleTaskGroupSelection = (index: number) => {
         setTaskGroups(prevTaskGroups =>
             prevTaskGroups.map((taskGroup, i) =>
@@ -32,6 +101,11 @@ const TaskGroup: React.FC<TaskGroupProps> = ({ taskGroupsFetched }) => {
                             tIndex === taskIndex
                                 ? { ...task, selected: !task.selected }
                                 : task
+                        ),
+                        selected: taskGroup.tasks.some((task, tIndex) =>
+                            tIndex === taskIndex
+                                ? !task.selected
+                                : task.selected
                         )
                     }
                     : taskGroup
@@ -39,6 +113,7 @@ const TaskGroup: React.FC<TaskGroupProps> = ({ taskGroupsFetched }) => {
         );
     };
 
+    // Alert Components
     const alertWrongSelection = () => {
         return (
             <div className="fade-in-out fixed bottom-4 right-4 p-4 text-sm rounded-lg bg-red-50 bg-gray-100 text-gray-600" role="alert">
@@ -57,7 +132,22 @@ const TaskGroup: React.FC<TaskGroupProps> = ({ taskGroupsFetched }) => {
         );
     };
 
+    const alertNoToken = () => {
+        return (
+            <div className="fade-in-out fixed bottom-4 right-4 p-4 text-sm rounded-lg bg-red-50 bg-gray-100 text-gray-600" role="alert">
+                <span className="font-medium">No se pudo enviar las tareas. Token no válido.</span>
+            </div>
+        );
+    };
+
+    // Post Task Groups
     const handlePostTaskGroups = () => {
+        if (localStorage.getItem('accessToken') === null) {
+            setShowAlertNoToken(true);
+            setTimeout(() => setShowAlertNoToken(false), 5000);
+            throw new Error('No se pudo enviar las tareas. Token no válido.');
+        }
+
         const selectedGroups = taskGroups.filter(group => group.selected);
 
         if (selectedGroups.length === 0) {
@@ -100,7 +190,27 @@ const TaskGroup: React.FC<TaskGroupProps> = ({ taskGroupsFetched }) => {
                 {taskGroups.map((taskGroup, groupIndex) => (
                     <div key={groupIndex} className="bg-white rounded-lg shadow-md p-6">
                         <div className="flex justify-between items-center">
-                            <h3 className="text-xl font-bold mb-4 text-blue-600">{taskGroup.title}</h3>
+                            <div className="flex justify-between items-center">
+                                {editingTitleIndex === groupIndex ? (
+                                    <input
+                                        type="text"
+                                        name={`task-group-title-${groupIndex}`}
+                                        value={taskGroup.title}
+                                        onChange={(e) => handleTitleChange(groupIndex, e.target.value)}
+                                        onBlur={handleTitleBlur}
+                                        onKeyDown={(e) => handleTitleKeyDown(e)}
+                                        className="w-100 font-bold mb-4 text-blue-600 bg-transparent border-b-2 border-blue-300 focus:border-blue-500 focus:outline-none"
+                                        autoFocus
+                                    />
+                                ) : (
+                                    <h3
+                                        className="text-xl font-bold mb-4 text-blue-600 cursor-pointer hover:text-blue-800 transition-colors"
+                                        onClick={() => handleTitleClick(groupIndex)}
+                                    >
+                                        {taskGroup.title}
+                                    </h3>
+                                )}
+                            </div>
                             <input
                                 id={`task-group-checkbox-${groupIndex}`}
                                 name="test-checkbox"
@@ -114,19 +224,86 @@ const TaskGroup: React.FC<TaskGroupProps> = ({ taskGroupsFetched }) => {
                             {taskGroup.tasks.map((task, taskIndex) => (
                                 <div key={taskIndex} className="p-4 bg-gray-50 rounded border-l-4 border-blue-500">
                                     <div className="flex justify-between items-start mb-2">
-                                        <h4 className="font-medium text-gray-900">{task.title}</h4>
-                                        <span className={`px-2 py-1 text-xs rounded-full ${task.priority === "high" ? "bg-red-100 text-red-800" :
-                                            task.priority === "medium" ? "bg-yellow-100 text-yellow-800" :
-                                                "bg-green-100 text-green-800"
-                                            }`}>
-                                            {task.priority}
-                                        </span>
+                                        {isTaskFieldEditing(groupIndex, taskIndex, 'title') ? (
+                                            <input
+                                                type="text"
+                                                value={task.title}
+                                                onChange={(e) => handleTaskFieldChange(groupIndex, taskIndex, 'title', e.target.value)}
+                                                onBlur={handleTaskFieldBlur}
+                                                onKeyDown={handleTaskFieldKeyDown}
+                                                className="font-medium text-gray-900 bg-transparent border-b-2 border-gray-300 focus:border-gray-500 focus:outline-none flex-1 mr-2"
+                                                autoFocus
+                                            />
+                                        ) : (
+                                            <h4
+                                                className="font-medium text-gray-900 cursor-pointer hover:text-gray-700 transition-colors flex-1"
+                                                onClick={() => handleTaskFieldClick(groupIndex, taskIndex, 'title')}
+                                            >
+                                                {task.title}
+                                            </h4>
+                                        )}
+                                        {isTaskFieldEditing(groupIndex, taskIndex, 'priority') ? (
+                                            <select
+                                                value={task.priority}
+                                                onChange={(e) => handleTaskFieldChange(groupIndex, taskIndex, 'priority', e.target.value)}
+                                                onBlur={handleTaskFieldBlur}
+                                                onKeyDown={handleTaskFieldKeyDown}
+                                                className="text-xs rounded-full border focus:outline-none focus:ring-2 focus:ring-blue-300"
+                                                autoFocus
+                                            >
+                                                <option value="low">Low</option>
+                                                <option value="medium">Medium</option>
+                                                <option value="high">High</option>
+                                            </select>
+                                        ) : (
+                                            <span
+                                                className={`px-2 py-1 text-xs rounded-full cursor-pointer hover:opacity-75 transition-opacity ${task.priority === "high" ? "bg-red-100 text-red-800" :
+                                                        task.priority === "medium" ? "bg-yellow-100 text-yellow-800" :
+                                                            "bg-green-100 text-green-800"
+                                                    }`}
+                                                onClick={() => handleTaskFieldClick(groupIndex, taskIndex, 'priority')}
+                                            >
+                                                {task.priority}
+                                            </span>
+                                        )}
                                     </div>
-                                    <p className="text-gray-600 mb-2">{task.description}</p>
+                                    {isTaskFieldEditing(groupIndex, taskIndex, 'description') ? (
+                                        <textarea
+                                            value={task.description}
+                                            onChange={(e) => handleTaskFieldChange(groupIndex, taskIndex, 'description', e.target.value)}
+                                            onBlur={handleTaskFieldBlur}
+                                            onKeyDown={handleTaskFieldKeyDown}
+                                            className="w-full text-gray-600 mb-2 bg-transparent border border-gray-300 rounded p-2 focus:border-gray-500 focus:outline-none resize-none"
+                                            rows={3}
+                                            autoFocus
+                                        />
+                                    ) : (
+                                        <p
+                                            className="text-gray-600 mb-2 cursor-pointer hover:text-gray-500 transition-colors"
+                                            onClick={() => handleTaskFieldClick(groupIndex, taskIndex, 'description')}
+                                        >
+                                            {task.description}
+                                        </p>
+                                    )}
                                     <div className="flex justify-between items-start mb-2">
-                                        <span className="inline-block px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded">
-                                            {task.environment}
-                                        </span>
+                                        {isTaskFieldEditing(groupIndex, taskIndex, 'environment') ? (
+                                            <input
+                                                type="text"
+                                                value={task.environment}
+                                                onChange={(e) => handleTaskFieldChange(groupIndex, taskIndex, 'environment', e.target.value)}
+                                                onBlur={handleTaskFieldBlur}
+                                                onKeyDown={handleTaskFieldKeyDown}
+                                                className="inline-block px-2 py-1 text-xs bg-transparent border border-blue-300 rounded focus:border-blue-500 focus:outline-none"
+                                                autoFocus
+                                            />
+                                        ) : (
+                                            <span
+                                                className="inline-block px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded cursor-pointer hover:bg-blue-200 transition-colors"
+                                                onClick={() => handleTaskFieldClick(groupIndex, taskIndex, 'environment')}
+                                            >
+                                                {task.environment}
+                                            </span>
+                                        )}
                                         <input
                                             id={`task-checkbox-${groupIndex}-${taskIndex}`}
                                             name="task-checkbox"
@@ -152,6 +329,7 @@ const TaskGroup: React.FC<TaskGroupProps> = ({ taskGroupsFetched }) => {
             </div>
             {showAlertWrongSelection && alertWrongSelection()}
             {showAlertTasksSendCorrectly && alertTasksSendCorrectly()}
+            {showAlertNoToken && alertNoToken()}
         </div>
     );
 };

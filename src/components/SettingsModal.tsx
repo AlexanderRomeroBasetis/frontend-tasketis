@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { userService } from "../api/userService";
-import type { IUserUpdateRequest } from "../interfaces";
+import type { IUserUpdateRequest, IUserAiConfiguration } from "../interfaces";
+import { EyeButton } from "./EyeButton";
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -12,13 +13,28 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
   const [jiraServerType, setJiraServerType] = useState("cloud");
   const [jiraUrl, setJiraUrl] = useState("");
   const [geminiToken, setGeminiToken] = useState("");
+  const [chatgptToken, setChatgptToken] = useState("");
+  const [userAiData, setUserAiData] = useState<IUserAiConfiguration[]>([]);
 
   useEffect(() => {
     userService.getUser().then(user => {
       setJiraToken(user.jiraToken);
       setJiraServerType(user.jiraVersion === 1 ? "cloud" : "server");
       setJiraUrl(user.jiraUrl);
-      setGeminiToken(user.geminiToken);
+    });
+  }, [isOpen]);
+
+  useEffect(() => {
+    userService.getAiUserConfiguration().then(userAiData => {
+      setUserAiData(userAiData);
+      userAiData.forEach(config => {
+        // gemini 1 chatgpt 2
+        if (config.type === 1) {
+          setGeminiToken(config.token);
+        } else if (config.type === 2) {
+          setChatgptToken(config.token);
+        }
+      });
     });
   }, [isOpen]);
 
@@ -29,12 +45,25 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
     const userData: IUserUpdateRequest = {
-      geminiToken,
       jiraToken,
       jiraUrl,
       jiraVersion: jiraServerType === "cloud" ? 1 : 0,
     };
-    userService.updateUser(userData);
+    userService.updateJiraUserCredentials(userData);
+
+    userAiData.forEach(config => {
+      if (config.type === 1) {
+        userService.updateAiUserConfiguration({
+          type: 1,
+          token: geminiToken,
+        });
+      } else if (config.type === 2) {
+        userService.updateAiUserConfiguration({
+          type: 2,
+          token: chatgptToken,
+        });
+      }
+    });
     onClose();
   }
 
@@ -65,14 +94,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                   input.type = input.type === "password" ? "text" : "password";
                 }}
               >
-                <svg className="shrink-0 size-3.5" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path className="hs-password-active:hidden" d="M9.88 9.88a3 3 0 1 0 4.24 4.24"></path>
-                  <path className="hs-password-active:hidden" d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"></path>
-                  <path className="hs-password-active:hidden" d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"></path>
-                  <line className="hs-password-active:hidden" x1="2" x2="22" y1="2" y2="22"></line>
-                  <path className="hidden hs-password-active:block" d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
-                  <circle className="hidden hs-password-active:block" cx="12" cy="12" r="3"></circle>
-                </svg>
+                <EyeButton />
               </button>
             </div>
           </div>
@@ -116,14 +138,30 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                   input.type = input.type === "password" ? "text" : "password";
                 }}
               >
-                <svg className="shrink-0 size-3.5" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path className="hs-password-active:hidden" d="M9.88 9.88a3 3 0 1 0 4.24 4.24"></path>
-                  <path className="hs-password-active:hidden" d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"></path>
-                  <path className="hs-password-active:hidden" d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"></path>
-                  <line className="hs-password-active:hidden" x1="2" x2="22" y1="2" y2="22"></line>
-                  <path className="hidden hs-password-active:block" d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
-                  <circle className="hidden hs-password-active:block" cx="12" cy="12" r="3"></circle>
-                </svg>
+                <EyeButton />
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label htmlFor="chatgpt-api-token" className="block text-sm font-medium text-gray-700">ChatGPT API Token</label>
+            <div className="flex pl-2 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+              <input
+                type="password"
+                id="chatgpt-api-token"
+                value={chatgptToken}
+                onChange={(e) => setChatgptToken(e.target.value)}
+                className="mt-1 w-full px-3"
+              />
+              <button
+                type="button"
+                className="text-gray-500 hover:text-gray-800 p-2 cursor-pointer"
+                onClick={() => {
+                  const input = document.getElementById("chatgpt-api-token") as HTMLInputElement;
+                  input.type = input.type === "password" ? "text" : "password";
+                }}
+              >
+                <EyeButton />
               </button>
             </div>
           </div>

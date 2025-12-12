@@ -30,7 +30,7 @@ export const jiraService = {
     },
 
     postTestCases: async (issueKey: string, testCases: ITestCase[]): Promise<void> => {
-        const endpoint = `/api/post-test-cases?issueKey=${issueKey}`;
+        const endpoint = `/api/test?issueKey=${issueKey}`;
         const accessToken = localStorage.getItem('accessToken');
 
         if (!accessToken) {
@@ -63,7 +63,7 @@ export const jiraService = {
     },
 
     postTaskGroups: async (projectKey: string, taskGroups: ITaskGroup[]): Promise<void> => {
-        const endpoint = `/api/post-tasks?projectKey=${projectKey}`;
+        const endpoint = `/api/task?projectKey=${projectKey}`;
         const accessToken = localStorage.getItem('accessToken');
 
         if (!accessToken) {

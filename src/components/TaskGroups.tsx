@@ -12,6 +12,8 @@ const TaskGroup: React.FC<TaskGroupProps> = ({ taskGroupsFetched }) => {
     const [showAlertWrongSelection, setShowAlertWrongSelection] = useState<boolean>(false);
     const [showAlertTasksSendCorrectly, setShowAlertTasksSendCorrectly] = useState<boolean>(false);
     const [showAlertNoToken, setShowAlertNoToken] = useState<boolean>(false);
+    const [projectKey, setProjectKey] = useState<string>("");
+    const [showAlertNoProjectKey, setShowAlertNoProjectKey] = useState<boolean>(false);
     const [editingTitleIndex, setEditingTitleIndex] = useState<number | null>(null);
     const [editingTaskField, setEditingTaskField] = useState<{
         groupIndex: number;
@@ -140,6 +142,25 @@ const TaskGroup: React.FC<TaskGroupProps> = ({ taskGroupsFetched }) => {
         );
     };
 
+    const alertNoProjectKey = () => {
+        return (
+            <div className="fade-in-out fixed bottom-4 right-4 p-4 text-sm rounded-lg bg-red-50 bg-gray-100 text-gray-600" role="alert">
+                <span className="font-medium">No se pudo enviar las tareas. Project Key no válido.</span>
+            </div>
+        );
+    };
+
+    // Validate Project Key
+    const handleProjectKeyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value.toUpperCase();
+        if (value.match(/^[A-Z0-9-]*$/) && value.length <= 4) {
+            setProjectKey(e.target.value);
+        } else {
+            setShowAlertNoProjectKey(true);
+            setTimeout(() => setShowAlertNoProjectKey(false), 5000);
+        }
+    }
+
     // Post Task Groups
     const handlePostTaskGroups = () => {
         if (localStorage.getItem('accessToken') === null) {
@@ -149,6 +170,13 @@ const TaskGroup: React.FC<TaskGroupProps> = ({ taskGroupsFetched }) => {
         }
 
         const selectedGroups = taskGroups.filter(group => group.selected);
+        console.log('Selected Groups:', selectedGroups);
+
+        if (!projectKey) {
+            setShowAlertNoProjectKey(true);
+            setTimeout(() => setShowAlertNoProjectKey(false), 5000);
+            throw new Error('No hay Project Key proporcionado.');
+        }
 
         if (selectedGroups.length === 0) {
             setShowAlertWrongSelection(true);
@@ -169,22 +197,31 @@ const TaskGroup: React.FC<TaskGroupProps> = ({ taskGroupsFetched }) => {
                 .filter(task => task.selected)
                 .map(task => ({
                     ...task,
-                    description: task.description
+                    description: String(task.description ?? ""),
                 }))
         })).filter(group => group.tasks.length > 0);
-
+        
         if (transformedGroups.length === 0) {
-            throw new Error('No hay tareas seleccionadas para enviar.');
+            throw new Error("No hay tareas seleccionadas para enviar.");
         }
 
-        console.log('Grupos de tareas seleccionados para enviar:', transformedGroups);
-        jiraService.postTaskGroups('PIA', transformedGroups);
+        jiraService.postTaskGroups(projectKey, transformedGroups);
         setShowAlertTasksSendCorrectly(true);
         setTimeout(() => setShowAlertTasksSendCorrectly(false), 5000);
     };
 
     return (
         <div className="mt-6">
+            <div className="mb-4">
+                <input
+                    type="text"
+                    id="project-key"
+                    value={projectKey}
+                    onChange={handleProjectKeyChange}
+                    className="w-48 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Ingrese el Project Key"
+                />
+            </div>
             <h2 className="text-lg font-semibold mb-4">Tareas Generadas:</h2>
             <div className="space-y-6">
                 {taskGroups.map((taskGroup, groupIndex) => (
@@ -258,8 +295,8 @@ const TaskGroup: React.FC<TaskGroupProps> = ({ taskGroupsFetched }) => {
                                         ) : (
                                             <span
                                                 className={`px-2 py-1 text-xs rounded-full cursor-pointer hover:opacity-75 transition-opacity ${task.priority === "high" ? "bg-red-100 text-red-800" :
-                                                        task.priority === "medium" ? "bg-yellow-100 text-yellow-800" :
-                                                            "bg-green-100 text-green-800"
+                                                    task.priority === "medium" ? "bg-yellow-100 text-yellow-800" :
+                                                        "bg-green-100 text-green-800"
                                                     }`}
                                                 onClick={() => handleTaskFieldClick(groupIndex, taskIndex, 'priority')}
                                             >
@@ -330,6 +367,7 @@ const TaskGroup: React.FC<TaskGroupProps> = ({ taskGroupsFetched }) => {
             {showAlertWrongSelection && alertWrongSelection()}
             {showAlertTasksSendCorrectly && alertTasksSendCorrectly()}
             {showAlertNoToken && alertNoToken()}
+            {showAlertNoProjectKey && alertNoProjectKey()}
         </div>
     );
 };

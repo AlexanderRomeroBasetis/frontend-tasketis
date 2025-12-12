@@ -1,11 +1,13 @@
 import { useState, useRef } from "react";
+import type { ITaskGroup } from "../interfaces";
+import { taskService } from "../api/taskService";
 
 interface UploadFileProps {
-    onFilesGenerated: (taskGroups: any[]) => void;
-    testCaseService: any;
+    onFilesGenerated: (taskGroups: ITaskGroup[]) => void;
+    aiModel: number | 1;
 }
 
-const UploadFile: React.FC<UploadFileProps> = ({ onFilesGenerated, testCaseService }) => {
+const UploadFile: React.FC<UploadFileProps> = ({ onFilesGenerated, aiModel }) => {
     const [isDragActive, setIsDragActive] = useState(false);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [uploadError, setUploadError] = useState<string>('');
@@ -36,7 +38,7 @@ const UploadFile: React.FC<UploadFileProps> = ({ onFilesGenerated, testCaseServi
 
         try {
             if (selectedFile) {
-                const fetchedTasks = await testCaseService.generateTasks(selectedFile);
+                const fetchedTasks = await taskService.generateTasks(selectedFile, aiModel);
                 setIsLoading(false);
                 setSelectedFile(null);
                 onFilesGenerated(fetchedTasks);

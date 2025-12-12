@@ -1,8 +1,8 @@
 import type { ITaskGroup } from "../interfaces";
 
 export const taskService = {
-    generateTasks: async (pdf: File): Promise<ITaskGroup[]> => {
-        const endpoint = "/api/generate-tasks";
+    generateTasks: async (pdf: File, aiType: number): Promise<ITaskGroup[]> => {
+        const endpoint = `/api/task/generate?iaType=${aiType}`;
         const accessToken = localStorage.getItem('accessToken');
 
         if (!accessToken) {

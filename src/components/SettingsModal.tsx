@@ -10,7 +10,7 @@ interface SettingsModalProps {
 
 const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
   const [jiraToken, setJiraToken] = useState("");
-  const [jiraServerType, setJiraServerType] = useState("cloud");
+  const [jiraServerType, setJiraServerType] = useState<number>(1);
   const [jiraUrl, setJiraUrl] = useState("");
   const [geminiToken, setGeminiToken] = useState("");
   const [chatgptToken, setChatgptToken] = useState("");
@@ -19,7 +19,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
   useEffect(() => {
     userService.getUser().then(user => {
       setJiraToken(user.jiraToken);
-      setJiraServerType(user.jiraVersion === 1 ? "cloud" : "server");
+      console.log("User Jira Version:", user.jiraVersion);
+      setJiraServerType(user.jiraVersion);
       setJiraUrl(user.jiraUrl);
     });
   }, [isOpen]);
@@ -47,7 +48,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
     const userData: IUserUpdateRequest = {
       jiraToken,
       jiraUrl,
-      jiraVersion: jiraServerType === "cloud" ? 1 : 0,
+      jiraVersion: jiraServerType,
     };
     userService.updateJiraUserCredentials(userData);
 
@@ -103,12 +104,12 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
             <label htmlFor="jira-server-type" className="block text-sm font-medium text-gray-700">Jira Server Type</label>
             <select
               id="jira-server-type"
-              value={jiraServerType}
-              onChange={(e) => setJiraServerType(e.target.value)}
+              value={jiraServerType === 1 ? "Cloud" : "Server"}
+              onChange={(e) => setJiraServerType(e.target.value === "Cloud" ? 1 : 0)}
               className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 cursor-pointer"
             >
-              <option>Cloud</option>
-              <option>Server</option>
+              <option value="Cloud">Cloud</option>
+              <option value="Server">Server</option>
             </select>
           </div>
           <div>

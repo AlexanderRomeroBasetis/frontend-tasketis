@@ -26,7 +26,7 @@ export const jiraService = {
             return jiraIssue;
         } catch (error) {
             throw error;
-        }
+        } 
     },
 
     postTestCases: async (issueKey: string, testCases: ITestCase[]): Promise<void> => {

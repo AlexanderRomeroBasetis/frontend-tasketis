@@ -15,6 +15,10 @@ function App() {
   return (
     <Routes>
       <Route
+        path="/"
+        element={<Navigate to="/login" replace />}
+      />
+      <Route
         path="/login"
         element={
           <Login/>
@@ -40,6 +44,7 @@ function App() {
           </RequireAuth>
         }
       />
+      <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   )
 }
